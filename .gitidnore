@@ -1,18 +1,1 @@
-cat > .gitignore << 'EOF'
-# Build directories
-build/
-*.o
-*.a
-*.so
-
-# Editor
-*.swp
-*~
-.DS_Store
-
-# Logs
-*.log
-
-# Local config
-*.local
-EOF
+/build
