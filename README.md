@@ -15,20 +15,20 @@
 - **Flexible policies**: enforce presence of uppercase, lowercase, digits, symbols.
 - **CLI-friendly**: intuitive flags, batch generation, help output.
 
-### Build & Install
+### 🛠️ Build & Install
 
-```
+```bash
 git clone https://github.com/tsfc7bhv58-hue/spass.git
 cd spass
 ```
-
-# Build
+### Build
 ```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
-# Install to ~/.local/bin
+
+### Install to ~/.local/bin
 ```
 ./install.sh
 ```
@@ -37,7 +37,15 @@ Make sure ~/.local/bin is in your PATH. If not, add this to ~/.bashrc or ~/.zshr
 ```
 export PATH="$HOME/.local/bin:$PATH"
 ```
-Usage Examples
+### Important: 
+On some systems (especially Ubuntu), ~/.local/bin may not be in your PATH by default.
+After installation, if spass is not found, add it to your shell config:
+```
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+# Usage Examples
 ```
 spass 20                    # Generate 1 password, 20 chars
 spass 16 -c 5 -e            # Generate 5 passwords, enforce all symbol types
@@ -56,19 +64,21 @@ spass --help                # Show full help
 - **Гибкие правила**: можно гарантировать наличие заглавных, строчных, цифр и спецсимволов.
 - **Удобный CLI**: понятные флаги, генерация нескольких паролей, справка.
 
-### Сборка и установка
+### 🛠️ Сборка и установка
+
 ```
 git clone https://github.com/tsfc7bhv58-hue/spass.git
 cd spass
 ```
 
-# Сборка
+### Сборка
 ```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
-# Установка в ~/.local/bin
+
+### Установка в ~/.local/bin
 ```
 ./install.sh
 ```
@@ -77,8 +87,15 @@ make
 ```
 export PATH="$HOME/.local/bin:$PATH"
 ```
+### Важно: 
+В некоторых системах (особенно Ubuntu) папка ~/.local/bin не добавлена в PATH по умолчанию.
+Если после установки команда spass не распознаётся, добавьте её вручную:
+```
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
 
-Примеры использования
+# Примеры использования
 ```
 spass 20                    # Сгенерировать 1 пароль длиной 20
 spass 16 -c 5 -e            # Сгенерировать 5 паролей с обязательными всеми типами символов
