@@ -17,24 +17,28 @@
 
 ### Build & Install
 
-```bash
+```
 git clone https://github.com/tsfc7bhv58-hue/spass.git
 cd spass
+```
 
 # Build
+```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
-
+```
 # Install to ~/.local/bin
+```
 ./install.sh
+```
 
 Make sure ~/.local/bin is in your PATH. If not, add this to ~/.bashrc or ~/.zshrc:
+```
 export PATH="$HOME/.local/bin:$PATH"
-
+```
 Usage Examples
-
-
+```
 spass 20                    # Generate 1 password, 20 chars
 spass 16 -c 5 -e            # Generate 5 passwords, enforce all symbol types
 spass -s -u -o 12           # Only lowercase + digits, length 12
