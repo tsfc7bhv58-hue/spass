@@ -1,3 +1,0 @@
-/home/Robert/Документы/spass/build/CMakeFiles/spass.dir
-/home/Robert/Документы/spass/build/CMakeFiles/edit_cache.dir
-/home/Robert/Документы/spass/build/CMakeFiles/rebuild_cache.dir

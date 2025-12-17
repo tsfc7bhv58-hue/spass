@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/spass.dir/link.d CMakeFiles/spass.dir/src/main.cpp.o -o spass
