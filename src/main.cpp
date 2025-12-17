@@ -1,40 +1,36 @@
 #include <iostream>
+#include <memory>
 #include <string>
-#include <vector>
-#include <random>
-#include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <stdexcept>
+#include "SimpleGenerator.hpp"
+#include "PasswordPolicy.hpp"
 
 void show_help(const char* prog_name) {
     std::cout << "Использование: " << prog_name << " [ДЛИНА] [ОПЦИИ]\n"
-              << "Генератор надёжных паролей.\n\n"
+              << "Генератор надёжных паролей на основе /dev/urandom.\n\n"
               << "Опции:\n"
               << "  -s, --no-symbols      исключить спецсимволы\n"
-              << "  -l, --no-letters      исключить все буквы (заглавные и строчные)\n"
+              << "  -l, --no-letters      исключить все буквы\n"
               << "  -d, --no-digits       исключить цифры\n"
               << "  -u, --no-uppercase    исключить заглавные буквы\n"
               << "  -o, --no-lowercase    исключить строчные буквы\n"
               << "  -c N, --count=N       сгенерировать N паролей (по умолчанию: 1)\n"
+              << "  -e, --enforce-policy  гарантировать наличие всех выбранных типов символов\n"
               << "  -h, --help            показать эту справку\n\n"
               << "Примеры:\n"
               << "  " << prog_name << " 20\n"
               << "  " << prog_name << " 12 -s -u\n"
-              << "  " << prog_name << " -c 5 16\n";
+              << "  " << prog_name << " -c 5 16 -e\n";
 }
 
-std::string generate_password(int length, const std::string& charset) {
-    if (charset.empty() || length <= 0) return "";
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, static_cast<int>(charset.size()) - 1);
-
-    std::string pwd;
-    pwd.reserve(length);
-    for (int i = 0; i < length; ++i) {
-        pwd += charset[dis(gen)];
+bool is_positive_integer(const std::string& s) {
+    if (s.empty()) return false;
+    for (char c : s) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) return false;
     }
-    return pwd;
+    return true;
 }
 
 int main(int argc, char* argv[]) {
@@ -44,15 +40,11 @@ int main(int argc, char* argv[]) {
     bool use_symbols = true;
     int length = 16;
     int count = 1;
+    bool enforce_policy = false;
     bool length_set = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-
-        if (arg.empty()) {
-            std::cerr << "Ошибка: пустой аргумент\n";
-            return 1;
-        }
 
         if (arg == "-h" || arg == "--help") {
             show_help(argv[0]);
@@ -63,27 +55,28 @@ int main(int argc, char* argv[]) {
             if (arg == "-s" || arg == "--no-symbols") {
                 use_symbols = false;
             } else if (arg == "-l" || arg == "--no-letters") {
-                use_upper = false;
-                use_lower = false;
+                use_upper = use_lower = false;
             } else if (arg == "-d" || arg == "--no-digits") {
                 use_digits = false;
             } else if (arg == "-u" || arg == "--no-uppercase") {
                 use_upper = false;
             } else if (arg == "-o" || arg == "--no-lowercase") {
                 use_lower = false;
+            } else if (arg == "-e" || arg == "--enforce-policy") {
+                enforce_policy = true;
             } else if (arg == "-c" || arg == "--count") {
                 if (i + 1 >= argc) {
                     std::cerr << "Ошибка: ожидается число после " << arg << "\n";
                     return 1;
                 }
                 std::string next = argv[++i];
-                if (next.empty() || !std::all_of(next.begin(), next.end(), ::isdigit)) {
+                if (!is_positive_integer(next)) {
                     std::cerr << "Ошибка: '" << next << "' не является целым числом\n";
                     return 1;
                 }
                 count = std::atoi(next.c_str());
                 if (count <= 0 || count > 100) {
-                    std::cerr << "Ошибка: количество паролей должно быть от 1 до 100\n";
+                    std::cerr << "Ошибка: количество должно быть от 1 до 100\n";
                     return 1;
                 }
             } else {
@@ -96,7 +89,7 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Ошибка: длина указана более одного раза\n";
                 return 1;
             }
-            if (!std::all_of(arg.begin(), arg.end(), ::isdigit)) {
+            if (!is_positive_integer(arg)) {
                 std::cerr << "Ошибка: ожидалось число (длина), получено: " << arg << "\n";
                 return 1;
             }
@@ -108,25 +101,32 @@ int main(int argc, char* argv[]) {
             length_set = true;
         }
     }
-
-    std::string charset = "";
-    if (use_upper)    charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    if (use_lower)    charset += "abcdefghijklmnopqrstuvwxyz";
-    if (use_digits)   charset += "0123456789";
-    if (use_symbols)  charset += "!@#$%^&*()_+-=[]{}|;:,.<>?~";
-
-    if (charset.empty()) {
-        std::cerr << "Ошибка: не выбрано ни одного типа символов!\n";
-        return 1;
+    if (!use_upper && !use_lower && (use_upper || use_lower)) {
     }
 
-    for (int i = 0; i < count; ++i) {
-        std::string pwd = generate_password(length, charset);
-        if (pwd.empty()) {
-            std::cerr << "Ошибка генерации пароля\n";
-            return 1;
+    try {
+        auto generator = std::make_unique<SimpleGenerator>(use_upper, use_lower, use_digits, use_symbols);
+
+        for (int i = 0; i < count; ++i) {
+            std::string pwd;
+            int attempts = 0;
+            const int max_attempts = 1000;
+
+            do {
+                pwd = generator->generate(length);
+                attempts++;
+                if (attempts > max_attempts) {
+                    std::cerr << "Не удалось сгенерировать пароль, удовлетворяющий политике\n";
+                    return 1;
+                }
+            } while (enforce_policy && !PasswordPolicy::satisfies(pwd, use_upper, use_lower, use_digits, use_symbols));
+
+            std::cout << pwd << '\n';
         }
-        std::cout << pwd << '\n';
+
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;
